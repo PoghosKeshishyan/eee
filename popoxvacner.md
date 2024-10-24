@@ -10,6 +10,34 @@ mongoose.connect(process.env.MONGO_URI)
 
 app.use('/api/user')
 
+# models >> User.js
+const schema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: true,
+    },
+
+    email: {
+        type: String,
+        required: true,
+        unique: true,
+    },
+
+    password: {
+        type: String,
+        required: true,
+    },
+
+    cratedTodos: [
+        { 
+            type: mongoose.Types.ObjectId, 
+            ref: 'Todo',
+        },
+    ],
+}, {
+    timestamps: true  // Эта опция добавляет поля createdAt и updatedAt
+});
+
 
 # npm install express-validator
 # create folder >> middlewares >> validate.js
@@ -19,6 +47,7 @@ app.use('/api/user')
 const { check } = require('express-validator');
 
 const validate = [
+    check('name', 'Name must be between 2 and 20 characters long').isLength({ min: 2, max: 20 }),
     check('email', 'Invalid email').isEmail(),
     check('password', 'Password must be at least 6 characters long').isLength({ min: 6 }),
 ];
@@ -53,7 +82,7 @@ const register = async (req, res) => {
         });
     }
 
-    const { email, password } = req.body;
+    const { name, email, password } = req.body;
 
     try {
         // Проверяем, существует ли уже пользователь с таким email
@@ -68,7 +97,7 @@ const register = async (req, res) => {
         }
 
         // Create a new user
-        const user = new User({ email, password });
+        const user = new User({ name, email, password });
         await user.save();
 
         res.status(201).json({
